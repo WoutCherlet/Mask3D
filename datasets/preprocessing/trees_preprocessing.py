@@ -7,6 +7,8 @@ from loguru import logger
 import pandas as pd
 
 from datasets.preprocessing.base_preprocessing import BasePreprocessing
+from utils.point_cloud_utils import load_ply_trees
+
 
 
 class STPLS3DPreprocessing(BasePreprocessing):
@@ -70,7 +72,26 @@ class STPLS3DPreprocessing(BasePreprocessing):
             filebase: info about file
         """
         
-        # TODO!
+        filebase = {
+            "filepath": filepath,
+            "scene": filepath.split("/")[-1],
+            "raw_filepath": str(filepath),
+            "file_len": -1,
+        }
+
+        # read in ply's
+
+        points, semantic_labels, instance_labels = load_ply_trees(filepath)
+        file_len = len(points)
+        filebase["file_len"] = file_len
+
+        # add rgb dummy
+        # add segment dummy
+        # add normals dummy
+        
+        # append instances and segments
+
+
 
         pass
 

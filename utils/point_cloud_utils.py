@@ -33,6 +33,17 @@ def load_ply_with_normals(filepath):
 
     return coords, feats, labels
 
+def load_ply_trees(filepath):
+    with open(filepath, "rb") as f:
+        plydata = PlyData.read(f)
+    data = plydata.elements[0].data
+    coords = np.array([data["x"], data["y"], data["z"]], dtype=np.float32).T
+    assert "semantic" in data.dtype.names, "tree tile must have semantic labels"
+    assert "instance" in data.dtype.names, "tree tile must have instance labels"
+    semantic_label = np.array(data["semantic"], dtype=np.uint32)
+    instance_label = np.array(data["instance"], dtype=np.uint32)
+    return coords, semantic_label, instance_label
+
 
 def load_obj_with_normals(filepath):
     mesh = open3d.io.read_triangle_mesh(str(filepath))
