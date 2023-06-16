@@ -80,27 +80,69 @@ class STPLS3DPreprocessing(BasePreprocessing):
         }
 
         # read in ply's
-
         points, semantic_labels, instance_labels = load_ply_trees(filepath)
         file_len = len(points)
         filebase["file_len"] = file_len
+        filebase["raw_segmentation_filepath"] = "" # TODO: ?
 
-        # add rgb dummy
-        # add segment dummy
-        # add normals dummy
+        # rgb, segment, normal dummy
+        dummy_rgb = np.ones((points.shape[0], 3))*255
+        segments_dummy = np.ones((points.shape[0], 1))
+        dummy_normals = np.ones((points.shape[0], 3))
+
+        points = np.hstack((points,
+                            dummy_rgb,
+                            segments_dummy,
+                            dummy_normals,
+                            semantic_labels[:,None],
+                            instance_labels[:,None]))
+
+        # encode gt data: semantic label * 1000 + instance_label per line
+        gt_data = (points[:, -2] + 1) * 1000 + points[:, -1] + 1
+
+        # save scenes and instance_gt
+
+        processed_filepath = self.save_dir / mode / f"{filebase['scene'].replace('.ply', '')}.npy"
+        if not processed_filepath.parent.exists():
+            processed_filepath.parent.mkdir(parents=True, exist_ok=True)
+        np.save(processed_filepath, points.astype(np.float32))
+        filebase["filepath"] = str(processed_filepath)
+
+        processed_gt_filepath = self.save_dir / "instance_gt" / mode / f"{filebase['scene'].replace('.ply', '')}.txt"
+        if not processed_gt_filepath.parent.exists():
+            processed_gt_filepath.parent.mkdir(parents=True, exist_ok=True)
+        np.savetxt(processed_gt_filepath, gt_data.astype(np.int32), fmt="%d")
+        filebase["instance_gt_filepath"] = str(processed_gt_filepath)
         
-        # append instances and segments
+        # TODO: we don't use color, skip this?
+        filebase["color_mean"] = [
+            float((points[:, 3] / 255).mean()),
+            float((points[:, 4] / 255).mean()),
+            float((points[:, 5] / 255).mean()),
+        ]
+        filebase["color_std"] = [
+            float(((points[:, 3] / 255) ** 2).mean()),
+            float(((points[:, 4] / 255) ** 2).mean()),
+            float(((points[:, 5] / 255) ** 2).mean()),
+        ]
+        return filebase
 
+    def compute_color_mean_std( # TODO: fix train database path
+            self, train_database_path: str = "./data/processed/trees/train_database.yaml"
+        ):
+            train_database = self._load_yaml(train_database_path)
+            color_mean, color_std = [], []
+            for sample in train_database:
+                color_std.append(sample["color_std"])
+                color_mean.append(sample["color_mean"])
 
-
-        pass
-
-
-
-
-
-
-
+            color_mean = np.array(color_mean).mean(axis=0)
+            color_std = np.sqrt(np.array(color_std).mean(axis=0) - color_mean ** 2)
+            feats_mean_std = {
+                "mean": [float(each) for each in color_mean],
+                "std": [float(each) for each in color_std],
+            }
+            self._save_yaml(self.save_dir / "color_mean_std.yaml", feats_mean_std)
 
 
 
