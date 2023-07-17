@@ -40,8 +40,8 @@ def load_ply_trees(filepath):
     coords = np.array([data["x"], data["y"], data["z"]], dtype=np.float32).T
     assert "semantic" in data.dtype.names, "tree tile must have semantic labels"
     assert "instance" in data.dtype.names, "tree tile must have instance labels"
-    semantic_label = np.array(data["semantic"], dtype=np.uint32)
-    instance_label = np.array(data["instance"], dtype=np.uint32)
+    semantic_label = np.array(data["semantic"], dtype=np.int32)
+    instance_label = np.array(data["instance"], dtype=np.int32)
     return coords, semantic_label, instance_label
 
 

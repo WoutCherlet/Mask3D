@@ -1,17 +1,14 @@
-import re
 import os
 import numpy as np
 from fire import Fire
 from natsort import natsorted
-from loguru import logger
-import pandas as pd
 
 from datasets.preprocessing.base_preprocessing import BasePreprocessing
 from utils.point_cloud_utils import load_ply_trees
 
 
 
-class STPLS3DPreprocessing(BasePreprocessing):
+class TreesPreprocessing(BasePreprocessing):
     def __init__(
             self,
             data_dir: str = "../../data/raw/trees/", # TODO: name?
@@ -147,4 +144,4 @@ class STPLS3DPreprocessing(BasePreprocessing):
 
 
 if __name__ == "__main__":
-    Fire(STPLS3DPreprocessing)
+    Fire(TreesPreprocessing)
