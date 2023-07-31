@@ -441,6 +441,16 @@ def evaluate(preds: dict, gt_path: str, output_file: str, dataset: str = "scanne
             LABEL_TO_ID[CLASS_LABELS[i]] = VALID_CLASS_IDS[i]
             ID_TO_LABEL[VALID_CLASS_IDS[i]] = CLASS_LABELS[i]
 
+    if dataset == "trees":
+        # TODO: update here if adding woody debris
+        CLASS_LABELS = ["Terrain", "Tree"]
+        VALID_CLASS_IDS = np.array([1,2])
+        ID_TO_LABEL = {}
+        LABEL_TO_ID = {}
+        for i in range(len(VALID_CLASS_IDS)):
+            LABEL_TO_ID[CLASS_LABELS[i]] = VALID_CLASS_IDS[i]
+            ID_TO_LABEL[VALID_CLASS_IDS[i]] = CLASS_LABELS[i]
+
     total_true = 0
     total_seen = 0
     NUM_CLASSES = len(VALID_CLASS_IDS)
@@ -463,6 +473,8 @@ def evaluate(preds: dict, gt_path: str, output_file: str, dataset: str = "scanne
     for i,(k,v) in enumerate(preds.items()):
         gt_file = os.path.join(gt_path, k + ".txt")
         if not os.path.isfile(gt_file):
+            print(gt_file)
+            print(preds)
             util.print_error('Scan {} does not match any gt file'.format(k), user_fault=True)
 
         if dataset == "s3dis":

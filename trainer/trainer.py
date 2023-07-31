@@ -24,6 +24,7 @@ import random
 import colorsys
 from typing import List, Tuple
 import functools
+import traceback
 
 
 @functools.lru_cache(20)
@@ -95,7 +96,6 @@ class InstanceSegmentation(pl.LightningModule):
 
     def training_step(self, batch, batch_idx):
         data, target, file_names = batch
-
         if data.features.shape[0] > self.config.general.max_batch_size:
             print("data exceeds threshold")
             raise RuntimeError("BATCH TOO BIG")
@@ -181,6 +181,9 @@ class InstanceSegmentation(pl.LightningModule):
                     fout.write(f"pred_mask/{file_name}_{real_id}.txt {pred_class} {score}\n")
 
     def training_epoch_end(self, outputs):
+        if len(outputs) == 0:
+            print("No outputs at end of epoch!")
+            return
         train_loss = sum([out["loss"].cpu().item() for out in outputs]) / len(outputs)
         results = {"train_loss_mean": train_loss}
         self.log_dict(results)
@@ -419,12 +422,17 @@ class InstanceSegmentation(pl.LightningModule):
         labels = torch.arange(num_classes, device=device).unsqueeze(0).repeat(num_queries, 1).flatten(0, 1)
 
         if self.config.general.topk_per_image != -1 :
-            scores_per_query, topk_indices = mask_cls.flatten(0, 1).topk(self.config.general.topk_per_image, sorted=True)
+            # scores_per_query, topk_indices = mask_cls.flatten(0, 1).topk(self.config.general.topk_per_image, sorted=True)
+            flattened = mask_cls.flatten(0, 1)
+            scores_per_query, topk_indices = flattened.topk(min(self.config.general.topk_per_image, flattened.size(dim=0)), sorted=True)
         else:
+            # flattened = mask_cls.flatten(0, 1)
+            # scores_per_query, topk_indices = flattened.topk(min(num_queries, flattened.size(dim=0)), sorted=True)
             scores_per_query, topk_indices = mask_cls.flatten(0, 1).topk(num_queries, sorted=True)
 
         labels_per_query = labels[topk_indices]
-        topk_indices = topk_indices // num_classes
+        topk_indices = torch.div(topk_indices, num_classes, rounding_mode='floor')
+        # topk_indices = topk_indices // num_classes
         mask_pred = mask_pred[:, topk_indices]
 
         result_pred_mask = (mask_pred > 0).float()
@@ -708,7 +716,7 @@ class InstanceSegmentation(pl.LightningModule):
         root_path = f"eval_output"
         base_path = f"{root_path}/instance_evaluation_{self.config.general.experiment_name}_{self.current_epoch}"
 
-        if self.validation_dataset.dataset_name in ["scannet", "stpls3d", "scannet200"]:
+        if self.validation_dataset.dataset_name in ["scannet", "stpls3d", "scannet200", "trees"]:
             gt_data_path = f"{self.validation_dataset.data_dir[0]}/instance_gt/{self.validation_dataset.mode}"
         else:
             gt_data_path = f"{self.validation_dataset.data_dir[0]}/instance_gt/Area_{self.config.general.area}"
@@ -742,6 +750,16 @@ class InstanceSegmentation(pl.LightningModule):
                     }
 
                 evaluate(new_preds, gt_data_path, pred_path, dataset="stpls3d")
+            elif self.validation_dataset.dataset_name == "trees":
+                new_preds = {}
+                for key in self.preds.keys():
+                    new_preds[key.replace(".ply", "")] = {
+                        'pred_classes': self.preds[key]['pred_classes'],
+                        'pred_masks': self.preds[key]['pred_masks'],
+                        'pred_scores': self.preds[key]['pred_scores']
+                    }
+                
+                evaluate(new_preds, gt_data_path, pred_path, dataset="trees")
             else:
                 evaluate(self.preds, gt_data_path, pred_path, dataset=self.validation_dataset.dataset_name)
             with open(pred_path, "r") as fin:
@@ -764,7 +782,7 @@ class InstanceSegmentation(pl.LightningModule):
                             elif class_name in TAIL_CATS_SCANNET_200:
                                 tail_results.append(np.array((float(ap), float(ap_50), float(ap_25))))
                             else:
-                                assert(False, 'class not known!')
+                                assert False, 'class not known!'
                     else:
                         ap_results[f"{log_prefix}_{class_name}_val_ap"] = float(ap)
                         ap_results[f"{log_prefix}_{class_name}_val_ap_50"] = float(ap_50)
@@ -810,6 +828,24 @@ class InstanceSegmentation(pl.LightningModule):
                 ap_results = {key: 0. if math.isnan(score) else score for key, score in ap_results.items()}
         except (IndexError, OSError) as e:
             print("NO SCORES!!!")
+            # Get current system exception
+            import sys
+            import traceback
+            ex_type, ex_value, ex_traceback = sys.exc_info()
+
+            # Extract unformatter stack traces as tuples
+            trace_back = traceback.extract_tb(ex_traceback)
+
+            # Format stacktrace
+            stack_trace = list()
+
+            for trace in trace_back:
+                stack_trace.append("File : %s , Line : %d, Func.Name : %s, Message : %s" % (trace[0], trace[1], trace[2], trace[3]))
+
+            print("Exception type : %s " % ex_type.__name__)
+            print("Exception message : %s" %ex_value)
+            print("Stack trace : %s" %stack_trace)
+
             ap_results[f"{log_prefix}_mean_ap"] = 0.
             ap_results[f"{log_prefix}_mean_ap_50"] = 0.
             ap_results[f"{log_prefix}_mean_ap_25"] = 0.

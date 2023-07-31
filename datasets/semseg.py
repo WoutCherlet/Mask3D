@@ -120,6 +120,11 @@ class SemanticSegmentationDataset(Dataset):
             11: [200, 200, 200],    # board
             12: [50, 50, 50]      # clutter
             }
+        elif self.dataset_name == "trees":
+            self.color_map = {
+            0: [0, 0, 255],     # Terrain
+            1: [255, 0 , 0],    # Tree
+            }
         else:
             assert False, "dataset not known"
 
@@ -339,7 +344,7 @@ class SemanticSegmentationDataset(Dataset):
             assert not self.on_crops, "you need caching if on crops"
             points = np.load(self.data[idx]["filepath"].replace("../../", ""))
 
-        if "train" in self.mode and self.dataset_name in ["s3dis", "stpls3d"]:
+        if "train" in self.mode and self.dataset_name in ["s3dis", "stpls3d", "trees"]:
             inds = self.random_cuboid(points)
             points = points[inds]
 
@@ -516,8 +521,9 @@ class SemanticSegmentationDataset(Dataset):
                 color[:] = 255
 
         # normalize color information
-        pseudo_image = color.astype(np.uint8)[np.newaxis, :, :]
-        color = np.squeeze(self.normalize_color(image=pseudo_image)["image"])
+        if self.add_colors:
+            pseudo_image = color.astype(np.uint8)[np.newaxis, :, :]
+            color = np.squeeze(self.normalize_color(image=pseudo_image)["image"])
 
         # prepare labels and map from 0 to 20(40)
         labels = labels.astype(np.int32)
@@ -552,6 +558,9 @@ class SemanticSegmentationDataset(Dataset):
                     return self.__getitem__(0)
             return coordinates, features, labels, self.data[idx]['scene'], \
                    raw_color, raw_normals, raw_coordinates, idx
+        if self.dataset_name == "trees":
+            return coordinates, features, labels, self.data[idx]['scene'], \
+                    raw_color, raw_normals, raw_coordinates, idx
         else:
             return coordinates, features, labels, self.data[idx]['raw_filepath'].split("/")[-2], \
                    raw_color, raw_normals, raw_coordinates, idx

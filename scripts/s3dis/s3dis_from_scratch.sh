@@ -7,15 +7,15 @@ CURR_TOPK=-1
 CURR_QUERY=100
 
 python main_instance_segmentation.py \
-  general.project_name="s3dis" \
-  general.experiment_name="area${CURR_AREA}_from_scratch" \
-  data.batch_size=4 \
-  data/datasets=s3dis \
-  general.num_targets=14 \
-  data.num_labels=13 \
-  trainer.max_epochs=1001 \
-  general.area=${CURR_AREA} \
-  trainer.check_val_every_n_epoch=10
+general.project_name="s3dis" \
+general.experiment_name="area${CURR_AREA}_from_scratch" \
+data.batch_size=4 \
+data/datasets=s3dis \
+general.num_targets=14 \
+data.num_labels=13 \
+trainer.max_epochs=1001 \
+general.area=${CURR_AREA} \
+trainer.check_val_every_n_epoch=10
 
 python main_instance_segmentation.py \
 general.project_name="s3dis_eval" \
