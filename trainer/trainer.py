@@ -754,7 +754,7 @@ class InstanceSegmentation(pl.LightningModule):
                 new_preds = {}
                 for key in self.preds.keys():
                     new_preds[key.replace(".ply", "")] = {
-                        'pred_classes': self.preds[key]['pred_classes'],
+                        'pred_classes': self.preds[key]['pred_classes'] + 1,
                         'pred_masks': self.preds[key]['pred_masks'],
                         'pred_scores': self.preds[key]['pred_scores']
                     }

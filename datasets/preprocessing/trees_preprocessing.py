@@ -95,7 +95,7 @@ class TreesPreprocessing(BasePreprocessing):
                             instance_labels[:,None]))
 
         # encode gt data: semantic label * 1000 + instance_label per line
-        gt_data = (points[:, -2] + 1) * 1000 + points[:, -1] + 1
+        gt_data = (points[:, -2] + 1) * 1000 + points[:, -1]
 
         # save scenes and instance_gt
 
