@@ -204,6 +204,8 @@ class InstanceSegmentation(pl.LightningModule):
         gt_inst_pcd_color = []
         gt_boxes = []
 
+        # TODO: here: also save to ply format for easier vis
+
         if 'labels' in target_full:
             instances_colors = torch.from_numpy(
                 np.vstack(get_evenly_distributed_colors(target_full['labels'].shape[0])))
@@ -754,7 +756,7 @@ class InstanceSegmentation(pl.LightningModule):
                 new_preds = {}
                 for key in self.preds.keys():
                     new_preds[key.replace(".ply", "")] = {
-                        'pred_classes': self.preds[key]['pred_classes'] + 1,
+                        'pred_classes': self.preds[key]['pred_classes'], # TODO: fix AP here
                         'pred_masks': self.preds[key]['pred_masks'],
                         'pred_scores': self.preds[key]['pred_scores']
                     }

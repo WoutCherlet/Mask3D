@@ -443,8 +443,10 @@ def evaluate(preds: dict, gt_path: str, output_file: str, dataset: str = "scanne
 
     if dataset == "trees":
         # TODO: update here if adding woody debris
-        CLASS_LABELS = ["Terrain", "Tree"]
-        VALID_CLASS_IDS = np.array([1,2])
+        # TODO: fix AP issue, tried removing terrain as no instances but didn't work, now Tree has NaN AP
+        # try printing summary of preds and masks to get idea of how it looks, otherwise send mail to Jonas
+        CLASS_LABELS = ["Tree"]
+        VALID_CLASS_IDS = np.array([1])
         ID_TO_LABEL = {}
         LABEL_TO_ID = {}
         for i in range(len(VALID_CLASS_IDS)):
@@ -640,11 +642,3 @@ def evaluate(preds: dict, gt_path: str, output_file: str, dataset: str = "scanne
 
         return np.mean(precision), np.mean(recall)
 
-# TODO: remove this
-#import pandas as pd
-#def main():
-#    print("!!! CLI is only for debugging purposes. use `evaluate()` instead.")
-#    evaluate(pd.read_pickle("/globalwork/schult/saved_predictions.pkl"), opt.gt_path, opt.output_file)
-
-#if __name__ == '__main__':
-#    main()
