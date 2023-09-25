@@ -80,7 +80,7 @@ class TreesPreprocessing(BasePreprocessing):
         points, semantic_labels, instance_labels = load_ply_trees(filepath)
         file_len = len(points)
         filebase["file_len"] = file_len
-        filebase["raw_segmentation_filepath"] = "" # TODO: ?
+        filebase["raw_segmentation_filepath"] = ""
 
         # rgb, segment, normal dummy
         dummy_rgb = np.ones((points.shape[0], 3))*255
@@ -111,7 +111,6 @@ class TreesPreprocessing(BasePreprocessing):
         np.savetxt(processed_gt_filepath, gt_data.astype(np.int32), fmt="%d")
         filebase["instance_gt_filepath"] = str(processed_gt_filepath)
         
-        # TODO: we don't use color, skip this?
         filebase["color_mean"] = [
             float((points[:, 3] / 255).mean()),
             float((points[:, 4] / 255).mean()),
@@ -124,7 +123,7 @@ class TreesPreprocessing(BasePreprocessing):
         ]
         return filebase
 
-    def compute_color_mean_std( # TODO: fix train database path
+    def compute_color_mean_std(
             self, train_database_path: str = "./data/processed/trees/train_database.yaml"
         ):
             train_database = self._load_yaml(train_database_path)

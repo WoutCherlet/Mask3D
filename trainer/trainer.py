@@ -6,6 +6,7 @@ import shutil
 import os
 import math
 import pyviz3d.visualizer as vis
+import open3d as o3d
 from torch_scatter import scatter_mean
 import matplotlib
 from benchmark.evaluate_semantic_instance import evaluate
@@ -204,7 +205,7 @@ class InstanceSegmentation(pl.LightningModule):
         gt_inst_pcd_color = []
         gt_boxes = []
 
-        # TODO: here: also save to ply format for easier vis
+        ply_dir = f"{self.config['general']['save_dir']}/visualizations/ply/{file_name}"
 
         if 'labels' in target_full:
             instances_colors = torch.from_numpy(
@@ -247,6 +248,13 @@ class InstanceSegmentation(pl.LightningModule):
                      normals=original_normals,
                      visible=True,
                      point_size=point_size)
+        
+        pcd_gt = o3d.geometry.PointCloud()
+        pcd_gt.points = o3d.utility.Vector3dVector(full_res_coords)
+        pcd_gt.colors = o3d.utility.Vector3dVector(original_colors)
+        pcd_gt.normals = o3d.utility.Vector3dVector(original_normals)
+        o3d.io.write_point_cloud(os.path.join(ply_dir, "Input.ply"), pcd_gt)
+        
 
         if backbone_features is not None:
             v.add_points("PCA", full_res_coords,
@@ -268,6 +276,18 @@ class InstanceSegmentation(pl.LightningModule):
                          alpha=0.8,
                          visible=False,
                          point_size=point_size)
+            
+        pcd_gt_sem = o3d.geometry.PointCloud()
+        pcd_gt_sem.points = o3d.utility.Vector3dVector(gt_pcd_pos)
+        pcd_gt_sem.colors = o3d.utility.Vector3dVector(gt_pcd_color)
+        pcd_gt_sem.normals = o3d.utility.Vector3dVector(gt_pcd_normals)
+        o3d.io.write_point_cloud(os.path.join(ply_dir, "Semantics_GT.ply"), pcd_gt_sem)
+
+        pcd_gt_inst = o3d.geometry.PointCloud()
+        pcd_gt_inst.points = o3d.utility.Vector3dVector(gt_pcd_pos)
+        pcd_gt_inst.colors = o3d.utility.Vector3dVector(gt_inst_pcd_color)
+        pcd_gt_inst.normals = o3d.utility.Vector3dVector(gt_pcd_normals)
+        o3d.io.write_point_cloud(os.path.join(ply_dir, "Instances_GT.ply"), pcd_gt_inst)
 
         pred_coords = []
         pred_normals = []
@@ -319,6 +339,18 @@ class InstanceSegmentation(pl.LightningModule):
                              visible=False,
                              alpha=0.8,
                              point_size=point_size)
+                        
+                pcd_m3d_sem = o3d.geometry.PointCloud()
+                pcd_m3d_sem.points = o3d.utility.Vector3dVector(pred_coords)
+                pcd_m3d_sem.colors = o3d.utility.Vector3dVector(pred_sem_color)
+                pcd_m3d_sem.normals = o3d.utility.Vector3dVector(pred_normals)
+                o3d.io.write_point_cloud(os.path.join(ply_dir, "Semantics_Mask3d.ply"), pcd_m3d_sem)
+
+                pcd_m3d_inst = o3d.geometry.PointCloud()
+                pcd_m3d_inst.points = o3d.utility.Vector3dVector(pred_coords)
+                pcd_m3d_inst.colors = o3d.utility.Vector3dVector(gt_inst_pcd_color)
+                pcd_m3d_inst.normals = o3d.utility.Vector3dVector(pred_normals)
+                o3d.io.write_point_cloud(os.path.join(ply_dir, "Instances_Mask3d.ply"), pcd_m3d_inst)
 
         v.save(f"{self.config['general']['save_dir']}/visualizations/{file_name}")
 
@@ -434,7 +466,6 @@ class InstanceSegmentation(pl.LightningModule):
 
         labels_per_query = labels[topk_indices]
         topk_indices = torch.div(topk_indices, num_classes, rounding_mode='floor')
-        # topk_indices = topk_indices // num_classes
         mask_pred = mask_pred[:, topk_indices]
 
         result_pred_mask = (mask_pred > 0).float()

@@ -443,10 +443,12 @@ def evaluate(preds: dict, gt_path: str, output_file: str, dataset: str = "scanne
 
     if dataset == "trees":
         # TODO: update here if adding woody debris
-        # TODO: fix AP issue, tried removing terrain as no instances but didn't work, now Tree has NaN AP
+        # TODO: fix AP issue
         # try printing summary of preds and masks to get idea of how it looks, otherwise send mail to Jonas
-        CLASS_LABELS = ["Tree"]
+        CLASS_LABELS = ["Terrain", "Tree"]
         VALID_CLASS_IDS = np.array([1])
+
+
         ID_TO_LABEL = {}
         LABEL_TO_ID = {}
         for i in range(len(VALID_CLASS_IDS)):
