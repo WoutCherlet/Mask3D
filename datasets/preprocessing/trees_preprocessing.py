@@ -58,9 +58,7 @@ class TreesPreprocessing(BasePreprocessing):
         
     def process_file(self, filepath, mode):
         """process_file.
-
-        Please note, that for obtaining segmentation labels ply files were used.
-
+        
         Args:
             filepath: path to the main ply file
             mode: train, test or validation

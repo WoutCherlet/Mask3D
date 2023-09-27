@@ -206,6 +206,8 @@ class InstanceSegmentation(pl.LightningModule):
         gt_boxes = []
 
         ply_dir = f"{self.config['general']['save_dir']}/visualizations/ply/{file_name}"
+        if not os.path.exists(ply_dir):
+            os.makedirs(ply_dir)
 
         if 'labels' in target_full:
             instances_colors = torch.from_numpy(
@@ -251,7 +253,7 @@ class InstanceSegmentation(pl.LightningModule):
         
         pcd_gt = o3d.geometry.PointCloud()
         pcd_gt.points = o3d.utility.Vector3dVector(full_res_coords)
-        pcd_gt.colors = o3d.utility.Vector3dVector(original_colors)
+        pcd_gt.colors = o3d.utility.Vector3dVector(original_colors.astype(float) / 255.0)
         pcd_gt.normals = o3d.utility.Vector3dVector(original_normals)
         o3d.io.write_point_cloud(os.path.join(ply_dir, "Input.ply"), pcd_gt)
         
@@ -279,13 +281,13 @@ class InstanceSegmentation(pl.LightningModule):
             
         pcd_gt_sem = o3d.geometry.PointCloud()
         pcd_gt_sem.points = o3d.utility.Vector3dVector(gt_pcd_pos)
-        pcd_gt_sem.colors = o3d.utility.Vector3dVector(gt_pcd_color)
+        pcd_gt_sem.colors = o3d.utility.Vector3dVector(gt_pcd_color.astype(float) / 255.0)
         pcd_gt_sem.normals = o3d.utility.Vector3dVector(gt_pcd_normals)
         o3d.io.write_point_cloud(os.path.join(ply_dir, "Semantics_GT.ply"), pcd_gt_sem)
 
         pcd_gt_inst = o3d.geometry.PointCloud()
         pcd_gt_inst.points = o3d.utility.Vector3dVector(gt_pcd_pos)
-        pcd_gt_inst.colors = o3d.utility.Vector3dVector(gt_inst_pcd_color)
+        pcd_gt_inst.colors = o3d.utility.Vector3dVector(gt_inst_pcd_color.astype(float) / 255.0)
         pcd_gt_inst.normals = o3d.utility.Vector3dVector(gt_pcd_normals)
         o3d.io.write_point_cloud(os.path.join(ply_dir, "Instances_GT.ply"), pcd_gt_inst)
 
@@ -342,13 +344,13 @@ class InstanceSegmentation(pl.LightningModule):
                         
                 pcd_m3d_sem = o3d.geometry.PointCloud()
                 pcd_m3d_sem.points = o3d.utility.Vector3dVector(pred_coords)
-                pcd_m3d_sem.colors = o3d.utility.Vector3dVector(pred_sem_color)
+                pcd_m3d_sem.colors = o3d.utility.Vector3dVector(pred_sem_color.astype(float) / 255.0)
                 pcd_m3d_sem.normals = o3d.utility.Vector3dVector(pred_normals)
                 o3d.io.write_point_cloud(os.path.join(ply_dir, "Semantics_Mask3d.ply"), pcd_m3d_sem)
 
                 pcd_m3d_inst = o3d.geometry.PointCloud()
                 pcd_m3d_inst.points = o3d.utility.Vector3dVector(pred_coords)
-                pcd_m3d_inst.colors = o3d.utility.Vector3dVector(gt_inst_pcd_color)
+                pcd_m3d_inst.colors = o3d.utility.Vector3dVector(gt_inst_pcd_color.astype(float) / 255.0)
                 pcd_m3d_inst.normals = o3d.utility.Vector3dVector(pred_normals)
                 o3d.io.write_point_cloud(os.path.join(ply_dir, "Instances_Mask3d.ply"), pcd_m3d_inst)
 
@@ -787,7 +789,7 @@ class InstanceSegmentation(pl.LightningModule):
                 new_preds = {}
                 for key in self.preds.keys():
                     new_preds[key.replace(".ply", "")] = {
-                        'pred_classes': self.preds[key]['pred_classes'], # TODO: fix AP here
+                        'pred_classes': self.preds[key]['pred_classes'],
                         'pred_masks': self.preds[key]['pred_masks'],
                         'pred_scores': self.preds[key]['pred_scores']
                     }

@@ -442,9 +442,7 @@ def evaluate(preds: dict, gt_path: str, output_file: str, dataset: str = "scanne
             ID_TO_LABEL[VALID_CLASS_IDS[i]] = CLASS_LABELS[i]
 
     if dataset == "trees":
-        # TODO: update here if adding woody debris
         # TODO: fix AP issue
-        # try printing summary of preds and masks to get idea of how it looks, otherwise send mail to Jonas
         CLASS_LABELS = ["Terrain", "Tree"]
         VALID_CLASS_IDS = np.array([1])
 

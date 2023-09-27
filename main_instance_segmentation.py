@@ -13,6 +13,7 @@ from utils.utils import (
     load_checkpoint_with_missing_or_exsessive_keys,
     load_backbone_checkpoint_with_missing_or_exsessive_keys
 )
+import torch
 from pytorch_lightning import Trainer, seed_everything
 
 
@@ -93,6 +94,8 @@ def test(cfg: DictConfig):
 
 @hydra.main(config_path="conf", config_name="config_base_instance_segmentation.yaml")
 def main(cfg: DictConfig):
+    # manually init torch because wasn finding gpu anymore after holidays for some reason -_____-
+    torch.cuda.init()
     if cfg['general']['train_mode']:
         train(cfg)
     else:
