@@ -443,7 +443,7 @@ def evaluate(preds: dict, gt_path: str, output_file: str, dataset: str = "scanne
 
     if dataset == "trees":
         # TODO: fix AP issue
-        CLASS_LABELS = ["Terrain", "Tree"]
+        CLASS_LABELS = ["Tree"]
         VALID_CLASS_IDS = np.array([1])
 
 

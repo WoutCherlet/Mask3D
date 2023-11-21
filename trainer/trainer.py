@@ -350,7 +350,7 @@ class InstanceSegmentation(pl.LightningModule):
 
                 pcd_m3d_inst = o3d.geometry.PointCloud()
                 pcd_m3d_inst.points = o3d.utility.Vector3dVector(pred_coords)
-                pcd_m3d_inst.colors = o3d.utility.Vector3dVector(gt_inst_pcd_color.astype(float) / 255.0)
+                pcd_m3d_inst.colors = o3d.utility.Vector3dVector(pred_inst_color.astype(float) / 255.0)
                 pcd_m3d_inst.normals = o3d.utility.Vector3dVector(pred_normals)
                 o3d.io.write_point_cloud(os.path.join(ply_dir, "Instances_Mask3d.ply"), pcd_m3d_inst)
 
