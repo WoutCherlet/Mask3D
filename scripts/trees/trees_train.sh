@@ -5,12 +5,12 @@ CURR_QUERY=50
 
 # TRAIN
 python main_instance_segmentation.py \
-general.experiment_name="trees_v1_240train_vx030_bs8" \
+general.experiment_name="trees_easy_debug_transformed_120_vx30" \
 general.project_name="trees" \
 data/datasets=trees \
 general.num_targets=2 \
 data.num_labels=2 \
-data.voxel_size=0.30 \
+data.voxel_size=0.02 \
 data.num_workers=10 \
 data.batch_size=8 \
 model.num_queries=${CURR_QUERY} \

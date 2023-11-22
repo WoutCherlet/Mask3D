@@ -38,6 +38,8 @@ class TreesPreprocessing(BasePreprocessing):
         
         self.create_label_database()
 
+        self.TRANSFORM = True
+
         for mode in self.modes:
             filepaths = []
             for scene_path in [f.path for f in os.scandir(self.data_dir / mode)]:
@@ -84,6 +86,19 @@ class TreesPreprocessing(BasePreprocessing):
         dummy_rgb = np.ones((points.shape[0], 3))*255
         segments_dummy = np.ones((points.shape[0], 1))
         dummy_normals = np.ones((points.shape[0], 3))
+
+        if self.TRANSFORM:
+            # transform to unit cube and transpose to (0,0,0)
+            range = np.max(points, axis=0) - np.min(points, axis=0)
+            points = np.multiply(points, 1/range)
+
+            # translation to 0,0
+            min_bound = np.min(points, axis=0)
+            points = np.subtract(points, min_bound)
+            
+            # save transforms
+            filebase["scaling"] = 1/range
+            filebase["translation"] = min_bound
 
         points = np.hstack((points,
                             dummy_rgb,
