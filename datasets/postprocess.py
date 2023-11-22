@@ -5,11 +5,6 @@ import numpy as np
 from fire import Fire
 from loguru import logger
 
-
-
-# TODO: plan: read in val_database for file names
-# then read in points in visualizations/ply and retransform points
-
 class BasePostProcessing:
     def __init__(
         self,
@@ -21,28 +16,37 @@ class BasePostProcessing:
             logger.error("file database doesn't exist")
             raise FileNotFoundError
     
-        # if not os.path.exists(results_dir):
-        #     logger.error("results folder doesn't exist")
-        #     raise FileNotFoundError
+        if not os.path.exists(results_dir):
+            logger.error("results folder doesn't exist")
+            raise FileNotFoundError
         
-        # self.ply_dir = os.path.join(results_dir, "visualizations", "ply")
-        # if not os.path.exists(self.ply_dir):
-        #     logger.error(f"ply folder doesn't exist, make sure save_visualizations is True and ply's are saved at {ply_dir}")
-        #     raise FileNotFoundError
-        
+        self.ply_dir = os.path.join(results_dir, "visualizations", "ply")
+        if not os.path.exists(self.ply_dir):
+            logger.error(f"ply folder doesn't exist, make sure save_visualizations is True and ply's are saved at {ply_dir}")
+            raise FileNotFoundError
+    
+    # TODO: parallelize like for preprocess? if slow
     def postprocess(self):
-        # TODO: do all postprocessing here
-        transforms = self.read_transforms()
+        transform_dict = self.read_transforms()
+        for scene in transform_dict:
+            # TODO: read in points
+            points = None
+            scaling, translation = transform_dict[scene]
+            points = self.retransform(points, scaling, translation)
+            # TODO write points into results folder
         pass
     
+    def read_plys(self):
+        # TODO: read ply
+        # 5 files per scene: INPUT, semantics (GT and preds), instances (GT and preds)
+        pass
+
     def read_transforms(self):
-        # TODO: figure out best way to read points and redo transform
         files = self._load_yaml(self.database)
         transform_dict = {filebase["scene"]: (filebase["scaling"], filebase["translation"]) for filebase in files}
-        print(transform_dict)
         return transform_dict
 
-    def retransform(points, scale_factor, translation):
+    def retransform(self, points, scale_factor, translation):
         points = np.multiply(points, 1/scale_factor)
         points = np.substract(points, -translation)
         return points
