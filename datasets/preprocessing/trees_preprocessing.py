@@ -4,7 +4,7 @@ from fire import Fire
 from natsort import natsorted
 
 from datasets.preprocessing.base_preprocessing import BasePreprocessing
-from utils.point_cloud_utils import load_ply_trees
+from utils.point_cloud_utils import load_ply_trees, load_ply
 
 
 
@@ -78,6 +78,17 @@ class TreesPreprocessing(BasePreprocessing):
 
         # read in ply's
         points, semantic_labels, instance_labels = load_ply_trees(filepath)
+
+        # TODO: TEMP FOR TOM
+
+        # if mode == "test":
+        #     points, _, _ = load_ply(filepath)
+        #     semantic_labels = np.ones((points.shape[0]))
+        #     instance_labels = np.ones((points.shape[0]))
+        # else:
+        #     points, semantic_labels, instance_labels = load_ply_trees(filepath)
+
+
         file_len = len(points)
         filebase["file_len"] = file_len
         filebase["raw_segmentation_filepath"] = ""
@@ -90,15 +101,27 @@ class TreesPreprocessing(BasePreprocessing):
         if self.TRANSFORM:
             # transform to unit cube and transpose to (0,0,0)
             range = np.max(points, axis=0) - np.min(points, axis=0)
-            points = np.multiply(points, 1/range)
+            # scaling_factor = 1/range
+            # TODO: TEMP TEST: transform to [0,5] instead
+            scaling_factor = 5/range
+            points = np.multiply(points, scaling_factor)
 
             # translation to 0,0
             min_bound = np.min(points, axis=0)
             points = np.subtract(points, min_bound)
             
             # save transforms
-            filebase["scaling"] = 1/range
+            filebase["scaling"] = scaling_factor
             filebase["translation"] = min_bound
+
+        # instances should start at 0
+        # because Wytham tiles have instance labels all over the place
+        instance_labels = np.subtract(instance_labels, 1)
+        instance_labels[instance_labels == -2] = -1
+
+        # TODO: try this for preprocessing
+        new_instance_ids = np.unique(instance_labels, return_inverse=True)[1]
+        assert new_instance_ids.max() < 1000, "we cannot encode when there are more than 999 instances in a block"
 
         points = np.hstack((points,
                             dummy_rgb,
@@ -106,9 +129,10 @@ class TreesPreprocessing(BasePreprocessing):
                             dummy_normals,
                             semantic_labels[:,None],
                             instance_labels[:,None]))
-
+        
+        
         # encode gt data: semantic label * 1000 + instance_label per line
-        gt_data = (points[:, -2] + 1) * 1000 + points[:, -1]
+        gt_data = (points[:, -2]) * 1000 + points[:, -1]
 
         # save scenes and instance_gt
 

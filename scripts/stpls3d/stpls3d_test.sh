@@ -2,18 +2,19 @@
 export OMP_NUM_THREADS=3
 
 CURR_DBSCAN=12.5
-CURR_TOPK=-1
-CURR_QUERY=20
+CURR_TOPK=200
+CURR_QUERY=160
 CURR_SIZE=54
+CURR_THRESHOLD=0.01
 
 
 python main_instance_segmentation.py \
-general.experiment_name="test_stpls_query_${CURR_QUERY}_topk_${CURR_TOPK}_dbscan_${CURR_DBSCAN}_size_${CURR_SIZE}" \
+general.experiment_name="test_stpls_TODI_ALS_GENT_033" \
 general.project_name="stpls3d_test" \
 data/datasets=stpls3d \
 general.num_targets=15 \
 data.num_labels=15 \
-data.voxel_size=0.333 \
+data.voxel_size=0.33 \
 data.num_workers=10 \
 data.cache_data=true \
 data.cropping_v1=false \
@@ -22,11 +23,11 @@ model.num_queries=${CURR_QUERY} \
 general.on_crops=true \
 model.config.backbone._target_=models.Res16UNet18B \
 general.train_mode=false \
-general.checkpoint="checkpoints/stpls3d/stpls3d_benchmark_03.ckpt" \
+general.checkpoint="data/Synthetic_v3_InstanceSegmentation/stpls3d_benchmark/stpls3d_benchmark_03.ckpt" \
 data.crop_length=${CURR_SIZE} \
-general.eval_inner_core=50.0 \
 general.topk_per_image=${CURR_TOPK} \
-general.use_dbscan=true \
-general.dbscan_eps=${CURR_DBSCAN} \
 data.test_mode=test \
-general.export=true
+general.export=true \
+general.save_visualizations=true \
+# general.use_dbscan=true \
+# general.dbscan_eps=${CURR_DBSCAN} \

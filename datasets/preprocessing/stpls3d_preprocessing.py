@@ -7,6 +7,8 @@ from loguru import logger
 import pandas as pd
 
 from datasets.preprocessing.base_preprocessing import BasePreprocessing
+from utils.point_cloud_utils import load_ply
+
 
 class STPLS3DPreprocessing(BasePreprocessing):
     def __init__(
@@ -97,7 +99,12 @@ class STPLS3DPreprocessing(BasePreprocessing):
             "file_len": -1,
         }
 
-        points = pd.read_csv(filepath, header=None).values
+        # add Todi's files to test dataset
+        if mode == "test" and os.path.splitext(filepath)[-1] == ".ply":
+            points, colors, _  = load_ply(filepath)
+            points = np.hstack((points, colors))
+        else:
+            points = pd.read_csv(filepath, header=None).values
 
         filebase["raw_segmentation_filepath"] = ""
 
@@ -110,6 +117,7 @@ class STPLS3DPreprocessing(BasePreprocessing):
                                 np.ones(points.shape[0])[..., None]))  # segments
         else:
             # we need to add dummies for semantics and instances
+
             points = np.hstack((points,
                                 np.ones(points.shape[0])[..., None],   # semantic class
                                 np.ones(points.shape[0])[..., None],   # instance id
@@ -168,8 +176,9 @@ class STPLS3DPreprocessing(BasePreprocessing):
                     np.save(processed_filepath, block.astype(np.float32))
                     filebase["filepath_crop"].append(str(processed_filepath))
                 else:
-                    print("block was smaller than 1000 points")
-                    assert False
+                    print("block was smaller than 10000 points")
+                    # assert False
+                    pass
 
         filebase["color_mean"] = [
             float((points[:, 3] / 255).mean()),

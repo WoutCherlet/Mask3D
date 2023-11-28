@@ -279,17 +279,24 @@ class InstanceSegmentation(pl.LightningModule):
                          visible=False,
                          point_size=point_size)
             
-        pcd_gt_sem = o3d.geometry.PointCloud()
-        pcd_gt_sem.points = o3d.utility.Vector3dVector(gt_pcd_pos)
-        pcd_gt_sem.colors = o3d.utility.Vector3dVector(gt_pcd_color.astype(float) / 255.0)
-        pcd_gt_sem.normals = o3d.utility.Vector3dVector(gt_pcd_normals)
-        o3d.io.write_point_cloud(os.path.join(ply_dir, "Semantics_GT.ply"), pcd_gt_sem)
+            pcd_gt_sem = o3d.geometry.PointCloud()
+            pcd_gt_sem.points = o3d.utility.Vector3dVector(gt_pcd_pos)
+            if len(gt_pcd_color) != 0:
+                pcd_gt_sem.colors = o3d.utility.Vector3dVector(gt_pcd_color.astype(float) / 255.0)
+            else:
+                pcd_gt_sem.colors = o3d.utility.Vector3dVector()
 
-        pcd_gt_inst = o3d.geometry.PointCloud()
-        pcd_gt_inst.points = o3d.utility.Vector3dVector(gt_pcd_pos)
-        pcd_gt_inst.colors = o3d.utility.Vector3dVector(gt_inst_pcd_color.astype(float) / 255.0)
-        pcd_gt_inst.normals = o3d.utility.Vector3dVector(gt_pcd_normals)
-        o3d.io.write_point_cloud(os.path.join(ply_dir, "Instances_GT.ply"), pcd_gt_inst)
+            pcd_gt_sem.normals = o3d.utility.Vector3dVector(gt_pcd_normals)
+            o3d.io.write_point_cloud(os.path.join(ply_dir, "Semantics_GT.ply"), pcd_gt_sem)
+
+            pcd_gt_inst = o3d.geometry.PointCloud()
+            pcd_gt_inst.points = o3d.utility.Vector3dVector(gt_pcd_pos)
+            if len(gt_inst_pcd_color) != 0:
+                pcd_gt_inst.colors = o3d.utility.Vector3dVector(gt_inst_pcd_color.astype(float) / 255.0)
+            else:
+                pcd_gt_inst.colors = o3d.utility.Vector3dVector()
+            pcd_gt_inst.normals = o3d.utility.Vector3dVector(gt_pcd_normals)
+            o3d.io.write_point_cloud(os.path.join(ply_dir, "Instances_GT.ply"), pcd_gt_inst)
 
         pred_coords = []
         pred_normals = []
@@ -734,8 +741,17 @@ class InstanceSegmentation(pl.LightningModule):
 
         box_ap_50 = eval_det(self.bbox_preds, self.bbox_gt, ovthresh=0.5, use_07_metric=False)
         box_ap_25 = eval_det(self.bbox_preds, self.bbox_gt, ovthresh=0.25, use_07_metric=False)
-        mean_box_ap_25 = sum([v for k, v in box_ap_25[-1].items()]) / len(box_ap_25[-1].keys())
-        mean_box_ap_50 = sum([v for k, v in box_ap_50[-1].items()]) / len(box_ap_50[-1].keys())
+        if len(box_ap_25[-1].keys()) == 0:
+            print("No boxes for ap at 25 calc ?")
+            mean_box_ap_25 = np.nan
+        else:
+            mean_box_ap_25 = sum([v for k, v in box_ap_25[-1].items()]) / len(box_ap_25[-1].keys())
+
+        if len(box_ap_50[-1].keys()) == 0:
+            print("No boxes for ap at 50 calc ?")
+            mean_box_ap_50 = np.nan
+        else:
+            mean_box_ap_50 = sum([v for k, v in box_ap_50[-1].items()]) / len(box_ap_50[-1].keys())
 
         ap_results[f"{log_prefix}_mean_box_ap_25"] = mean_box_ap_25
         ap_results[f"{log_prefix}_mean_box_ap_50"] = mean_box_ap_50

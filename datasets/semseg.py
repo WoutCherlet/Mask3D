@@ -255,7 +255,9 @@ class SemanticSegmentationDataset(Dataset):
                                     'data': block
                                 })
                             else:
-                                assert False
+                                # assert False
+                                print("Block smaller than 10000 points, not using")
+                                pass
                     else:
                         conds_inner, blocks_outer = self.splitPointCloud(self._data[i]['data'],
                                                                          size=self.crop_length,

@@ -4,6 +4,7 @@ import yaml
 import numpy as np
 from fire import Fire
 from loguru import logger
+import open3d as o3d
 
 class BasePostProcessing:
     def __init__(
@@ -24,22 +25,24 @@ class BasePostProcessing:
         if not os.path.exists(self.ply_dir):
             logger.error(f"ply folder doesn't exist, make sure save_visualizations is True and ply's are saved at {ply_dir}")
             raise FileNotFoundError
+        
+        self.odir = os.path.join(results_dir, "retransformed_out")
     
-    # TODO: parallelize like for preprocess? if slow
     def postprocess(self):
         transform_dict = self.read_transforms()
         for scene in transform_dict:
-            # TODO: read in points
-            points = None
-            scaling, translation = transform_dict[scene]
-            points = self.retransform(points, scaling, translation)
-            # TODO write points into results folder
-        pass
-    
-    def read_plys(self):
-        # TODO: read ply
-        # 5 files per scene: INPUT, semantics (GT and preds), instances (GT and preds)
-        pass
+            scene_dir = os.path.join(self.ply_dir, scene)
+
+            scene_o_dir = os.path.join(self.odir, scene)
+
+            for file in os.listdir(scene_dir):
+                pc = o3d.io.read_point_cloud(file)
+                points = np.asarray(pc.points)
+                scaling, translation = transform_dict[scene]
+                points = self.retransform(points, scaling, translation)
+                pc.points = o3d.utility.Vector3dVector(points)
+                o3d.io.write_point_cloud(os.path.join(scene_o_dir, os.path.basename(file)), pc)
+        return
 
     def read_transforms(self):
         files = self._load_yaml(self.database)
